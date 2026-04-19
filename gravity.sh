@@ -764,49 +764,49 @@ gravity_DownloadBlocklistFromUrl() {
   # Check for allowed protocols
   if [[ $url != "http"* && $url != "https"* && $url != "file"* && $url != "ftp"* && $url != "ftps"* && $url != "sftp"* ]]; then
     echo -e "${OVER}  ${CROSS} ${str} Invalid protocol specified. Ignoring list."
-    echo -e "      Ensure your URL starts with a valid protocol like http:// , https:// or file:// ."
+    echo -e "    Ensure your URL starts with a valid protocol like http:// , https:// or file:// ."
     download=false
   fi
 
   if [[ "${download}" == true ]]; then
     httpCode=$(curl --connect-timeout ${curl_connect_timeout} -s -L ${compression:+${compression}} ${customUpstreamResolver:+${customUpstreamResolver}} "${modifiedOptions[@]}" -w "%{http_code}" "${url}" -o "${listCurlBuffer}" 2>/dev/null)
-  fi
 
-  case $url in
-  # Did we "download" a local file?
-  "file"*)
-    if [[ -s "${listCurlBuffer}" ]]; then
-      echo -e "${OVER}  ${TICK} ${str} Retrieval successful"
-      success=true
-    else
-      echo -e "${OVER}  ${CROSS} ${str} Retrieval failed / empty list"
-    fi
-    ;;
-  # Did we "download" a remote file?
-  *)
-    # Determine "Status:" output based on HTTP response
-    case "${httpCode}" in
-    "200")
-      echo -e "${OVER}  ${TICK} ${str} Retrieval successful"
-      success=true
+    case $url in
+    # Did we "download" a local file?
+    "file"*)
+      if [[ -s "${listCurlBuffer}" ]]; then
+        echo -e "${OVER}  ${TICK} ${str} Retrieval successful"
+        success=true
+      else
+        echo -e "${OVER}  ${CROSS} ${str} Retrieval failed / empty list"
+      fi
       ;;
-    "304")
-      echo -e "${OVER}  ${TICK} ${str} No changes detected"
-      success=true
+    # Did we "download" a remote file?
+    *)
+      # Determine "Status:" output based on HTTP response
+      case "${httpCode}" in
+      "200")
+        echo -e "${OVER}  ${TICK} ${str} Retrieval successful"
+        success=true
+        ;;
+      "304")
+        echo -e "${OVER}  ${TICK} ${str} No changes detected"
+        success=true
+        ;;
+      "000") echo -e "${OVER}  ${CROSS} ${str} Connection Refused" ;;
+      "403") echo -e "${OVER}  ${CROSS} ${str} Forbidden" ;;
+      "404") echo -e "${OVER}  ${CROSS} ${str} Not found" ;;
+      "408") echo -e "${OVER}  ${CROSS} ${str} Time-out" ;;
+      "451") echo -e "${OVER}  ${CROSS} ${str} Unavailable For Legal Reasons" ;;
+      "500") echo -e "${OVER}  ${CROSS} ${str} Internal Server Error" ;;
+      "504") echo -e "${OVER}  ${CROSS} ${str} Connection Timed Out (Gateway)" ;;
+      "521") echo -e "${OVER}  ${CROSS} ${str} Web Server Is Down (Cloudflare)" ;;
+      "522") echo -e "${OVER}  ${CROSS} ${str} Connection Timed Out (Cloudflare)" ;;
+      *) echo -e "${OVER}  ${CROSS} ${str} ${url} (${httpCode})" ;;
+      esac
       ;;
-    "000") echo -e "${OVER}  ${CROSS} ${str} Connection Refused" ;;
-    "403") echo -e "${OVER}  ${CROSS} ${str} Forbidden" ;;
-    "404") echo -e "${OVER}  ${CROSS} ${str} Not found" ;;
-    "408") echo -e "${OVER}  ${CROSS} ${str} Time-out" ;;
-    "451") echo -e "${OVER}  ${CROSS} ${str} Unavailable For Legal Reasons" ;;
-    "500") echo -e "${OVER}  ${CROSS} ${str} Internal Server Error" ;;
-    "504") echo -e "${OVER}  ${CROSS} ${str} Connection Timed Out (Gateway)" ;;
-    "521") echo -e "${OVER}  ${CROSS} ${str} Web Server Is Down (Cloudflare)" ;;
-    "522") echo -e "${OVER}  ${CROSS} ${str} Connection Timed Out (Cloudflare)" ;;
-    *) echo -e "${OVER}  ${CROSS} ${str} ${url} (${httpCode})" ;;
     esac
-    ;;
-  esac
+  fi
 
   local done="false"
   # Determine if the blocklist was downloaded and saved correctly
